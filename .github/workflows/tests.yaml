@@ -1,0 +1,31 @@
+name: Run tests
+
+on: [push, pull_request]
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: kyverno
+        uses: garethahealy/github-actions/kyverno-cli@kyverno
+        with:
+          raw: kyverno version
+
+      - name: Create k8s Kind Cluster
+        uses: helm/kind-action@v1.2.0
+
+      - name: Test against KinD
+        run: |
+          kyvernocli=$(docker images --filter=label=com.github.actions.name=kyverno-cli --format "{{.Repository}}:{{.Tag}}")
+          docker run --rm --network host --workdir /kyvernocli --volume "/home/runner/.kube/":"/root/.kube/" --volume "/home/runner/work/kyverno-mutate-generate-blog/kyverno-mutate-generate-blog":"/kyvernocli" --entrypoint .github/workflows/tests-entrypoint.sh ${kyvernocli}
+
+      - name: Get pods and events if tests failed
+        if: ${{ failure() }}
+        run: |
+          kubectl get nodes
+          kubectl get namespaces
+          kubectl get pods --all-namespaces
+          kubectl get events --all-namespaces

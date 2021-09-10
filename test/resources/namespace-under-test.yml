@@ -1,0 +1,13 @@
+---
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  name: project-under-test
+objects:
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    name: "${PROJECT_NAME}"
+parameters:
+- name: PROJECT_NAME
+  required: true

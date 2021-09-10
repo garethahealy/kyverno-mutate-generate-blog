@@ -1,0 +1,25 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: deny-all-traffic
+spec:
+  rules:
+    - name: deny-all-traffic
+      match:
+        resources:
+          kinds:
+            - Namespace
+          selector:
+            matchLabels:
+              redhat-cop.github.com/internal: "true"
+      generate:
+        kind: NetworkPolicy
+        name: deny-all-traffic
+        namespace: "{{request.object.metadata.name}}"
+        data:
+          spec:
+            # select all pods in the namespace
+            podSelector: {}
+            policyTypes:
+              - Ingress
+              - Egress

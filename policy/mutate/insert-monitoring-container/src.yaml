@@ -1,0 +1,18 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: insert-monitoring-container
+  annotations:
+    pod-policies.kyverno.io/autogen-controllers: none
+spec:
+  rules:
+    - name: insert-monitoring-container
+      match:
+        resources:
+          kinds:
+            - Deployment
+      mutate:
+        patchesJson6902: |-
+          - op: add
+            path: "/spec/template/spec/containers/1"
+            value: {"name":"pod-monitoring","image":"k8s.gcr.io/pause"}

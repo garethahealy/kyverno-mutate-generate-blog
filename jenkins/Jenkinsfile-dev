@@ -1,0 +1,30 @@
+node ("maven") {
+    stage("Clone blog") {
+        sh "git clone https://github.com/garethahealy/kyverno-mutate-generate-blog.git"
+    }
+
+    stage("Deploy generate resources") {
+        try {
+            dir("kyverno-mutate-generate-blog") {
+                sh "oc create -f policy/generate/deny-all-traffic/test_data/unit/list-ocp.yml"
+                sh "[[ \$(oc get networkpolicy -n kyverno-undertest-denyalltraffic -o name) == 'networkpolicy.networking.k8s.io/deny-all-traffic' ]]"
+            }
+        } finally {
+            sh "oc delete project/kyverno-undertest-denyalltraffic --wait=false"
+        }
+    }
+
+    stage("Deploy mutate resources") {
+        try {
+            dir("kyverno-mutate-generate-blog") {
+                sh "oc create -f policy/mutate/insert-monitoring-container/test_data/unit/list.yml"
+                sh "oc rollout status deployment/signedimage --watch=true"
+
+                sh "[[ \$(oc get pod -l app.kubernetes.io/name=Foo -o jsonpath='{.items[0].spec.containers[0].name}') == 'foo' ]]"
+                sh "[[ \$(oc get pod -l app.kubernetes.io/name=Foo -o jsonpath='{.items[0].spec.containers[1].name}') == 'pod-monitoring' ]]"
+            }
+        } finally {
+            sh "oc delete deployment/signedimage"
+        }
+    }
+}

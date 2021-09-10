@@ -1,0 +1,12 @@
+node ("maven") {
+    stage("Clone blog") {
+        sh "git clone https://github.com/garethahealy/kyverno-mutate-generate-blog.git"
+    }
+
+    stage("Deploy ClusterPolicy") {
+        dir("kyverno-mutate-generate-blog") {
+            sh "oc delete clusterpolicy --all"
+            sh "test/deploy-kyverno.sh deploy_policy"
+        }
+    }
+}
